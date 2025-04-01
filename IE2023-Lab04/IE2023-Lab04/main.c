@@ -28,8 +28,9 @@ uint8_t COUNTUP_LAST	= 0;
 uint8_t COUNTDWN_LAST	= 0;
 // Alarma
 #define ALARM			7
-uint8_t	ALARM_ACTIVE;
-uint8_t ALARM_5ms		= 0;
+uint8_t	ALARM_ACTIVE    = 0;
+uint8_t ALARM_500ms		= 0;
+uint8_t ALARM_166ms		= 0;
 // Arreglos para lógica de Bit Swizzling
 const uint8_t PORTD_PINS[]	= {PORTD0, PORTD1, PORTD2, PORTD3, PORTD4, PORTD6, PORTD7};
 const uint8_t LEDS_BITS[]	= {0,1,2,3,4,5,6};
@@ -80,6 +81,16 @@ int main(void)
 		} else if (COUNT <= ADC_VALUE)
 		{
 			ALARM_ACTIVE = 0;
+		}
+		
+		// Para la alarma, revisamos si ALARM_ACTIVE, ALARM_500ms, y ALARM_166ms ESTÁN ENCENDIDOS, para ENCENDER o no la alarma.
+		if (ALARM_ACTIVE == 1 && ALARM_500ms == 1 && ALARM_166ms == 1)
+		{
+			PORTC = (1 << ALARM);
+		}
+		else
+		{
+			PORTC = (0 << ALARM);
 		}
 	}
 }
@@ -273,24 +284,24 @@ ISR(ADC_vect)
 // Para la alarma, je
 ISR(TIMER1_OVF_vect)
 {
-	// Si pasaron 5ms, hacemos SWAP a ALARM_5ms:
-	if (ALARM_5ms == 0)
+	// Si pasaron 500ms, hacemos SWAP a ALARM_500ms
+	if (ALARM_500ms == 0)
 	{
-		ALARM_5ms = 1;
-	} else if (ALARM_5ms == 1)
+		ALARM_500ms = 1;
+	} else if (ALARM_500ms == 1)
 	{
-		ALARM_5ms = 0;
+		ALARM_500ms = 0;
 	}
 }
 
 ISR(TIMER3_OVF_vect)
 {
-	// Si la alarma está activa, y ALARM_5ms==1, hacemos SWAP en PC7 (ALARM BIT)
-	if ((ALARM_ACTIVE == 1) && (ALARM_5ms == 1))
+	// Si pasaron 166ms, hacemos SWAP a ALARM_166ms
+	if (ALARM_166ms == 0)
 	{
-		PORTC = (1 << ALARM);
-	} else
+		ALARM_166ms = 1;
+	} else if (ALARM_166ms == 1)
 	{
-		PORTC = (0 << ALARM);
+		ALARM_166ms = 0;
 	}
 }
