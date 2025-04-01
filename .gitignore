@@ -1,0 +1,30 @@
+# === Microchip Studio / Atmel Studio build ===
+Debug/
+Release/
+*.dep
+*.d
+*.elf
+*.hex
+*.eep
+*.lss
+*.map
+*.o
+*.srec
+
+# === IDE config ===
+*.aps
+*.suo
+*.user
+*.ncb
+*.sdf
+*.opensdf
+
+# === Backup / temporary ===
+*~
+*.bak
+*.tmp
+
+# === System files ===
+.DS_Store
+Thumbs.db
+Desktop.ini
