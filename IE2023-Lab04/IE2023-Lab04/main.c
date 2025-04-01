@@ -15,7 +15,7 @@
 // TIMERS
 #define T0VALUE			178
 #define T1VALUE			3036
-#define T3VALUE			44703
+#define T4VALUE			116
 // Multiplexación
 #define DISP0			5
 #define DISP1			4
@@ -53,7 +53,7 @@ uint8_t DISP1_VAL		= 0;
 void SETUP();
 void initTMR0();
 void initTMR1();
-void initTMR3();
+void initTMR4();
 void initPCINT();
 void initADC();
 void bitSwizzling(uint8_t VALUE);
@@ -119,7 +119,7 @@ void SETUP()
 	initTMR0();
 	// (Para la alarma, je)
 	initTMR1();
-	initTMR3();
+	initTMR4();
 	//
 	initPCINT();
 	initADC();
@@ -143,12 +143,12 @@ void initTMR1()
 	TCNT1	= T1VALUE;
 }
 
-void initTMR3()
+void initTMR4()
 {
-	// Usaremos TIM3 en modo NORMAL con PS de 8
-	TCCR3B	= (0 << CS32) | (1 << CS31) | (0 << CS30);
-	TIMSK3	= (1 << TOIE3);
-	TCNT3	= T3VALUE;
+	// Usaremos TIM4 en modo NORMAL con resolución de 8bits y PS de 512
+	TCCR4B	= (0 << PWM4X) | (1 << CS43) | (0 << CS42) | (1 << CS41) | (0 << CS40);
+	TIMSK4	= (1 << TOIE4);
+	TCNT4	= T4VALUE;
 }
 
 void initPCINT()
@@ -284,6 +284,8 @@ ISR(ADC_vect)
 // Para la alarma, je
 ISR(TIMER1_OVF_vect)
 {
+	// Recargamos TCNT1
+	TCNT1	= T1VALUE;
 	// Si pasaron 500ms, hacemos SWAP a ALARM_500ms
 	if (ALARM_500ms == 0)
 	{
@@ -294,8 +296,10 @@ ISR(TIMER1_OVF_vect)
 	}
 }
 
-ISR(TIMER3_OVF_vect)
+ISR(TIMER4_OVF_vect)
 {
+	// Recargamos TCNT4
+	TCNT4	= T4VALUE;
 	// Si pasaron 166ms, hacemos SWAP a ALARM_166ms
 	if (ALARM_166ms == 0)
 	{
