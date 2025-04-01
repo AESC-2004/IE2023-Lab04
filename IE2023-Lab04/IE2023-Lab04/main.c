@@ -12,8 +12,10 @@
 #include <stdint.h>
 
 // Variables y constantes
-// TIM0
+// TIMERS
 #define T0VALUE			178
+#define T1VALUE			3036
+#define T3VALUE			44703
 // Multiplexación
 #define DISP0			5
 #define DISP1			4
@@ -26,6 +28,8 @@ uint8_t COUNTUP_LAST	= 0;
 uint8_t COUNTDWN_LAST	= 0;
 // Alarma
 #define ALARM			7
+uint8_t	ALARM_ACTIVE;
+uint8_t ALARM_5ms		= 0;
 // Arreglos para lógica de Bit Swizzling
 const uint8_t PORTD_PINS[]	= {PORTD0, PORTD1, PORTD2, PORTD3, PORTD4, PORTD6, PORTD7};
 const uint8_t LEDS_BITS[]	= {0,1,2,3,4,5,6};
@@ -47,6 +51,8 @@ uint8_t DISP1_VAL		= 0;
 // Function prototypes
 void SETUP();
 void initTMR0();
+void initTMR1();
+void initTMR3();
 void initPCINT();
 void initADC();
 void bitSwizzling(uint8_t VALUE);
@@ -70,10 +76,10 @@ int main(void)
 		//Revisamos si COUNT > ADC. Si sí, encendemos la alarma. Si no, la apagamos.
 		if (COUNT > ADC_VALUE)
 		{
-			PORTC = (1 << ALARM);
+			ALARM_ACTIVE = 1;
 		} else if (COUNT <= ADC_VALUE)
 		{
-			PORTC = (0 << ALARM);
+			ALARM_ACTIVE = 0;
 		}
 	}
 }
@@ -100,6 +106,10 @@ void SETUP()
 	CLKPR			= (0 << CLKPCE) | (0 << CLKPS3) | (1 << CLKPS2) | (0 << CLKPS1) | (0 << CLKPS0);
 	// Algunos ajustes de interrupciones
 	initTMR0();
+	// (Para la alarma, je)
+	initTMR1();
+	initTMR3();
+	//
 	initPCINT();
 	initADC();
 	// Rehabilitamos interrupciones
@@ -112,6 +122,22 @@ void initTMR0()
 	TCCR0B	= (0 << CS02) | (1 << CS01) | (1 << CS00);
 	TIMSK0	= (1 << TOIE0);
 	TCNT0	= T0VALUE;
+}
+
+void initTMR1()
+{
+	// Usaremos TIM1 en modo NORMAL con PS de 8
+	TCCR1B	= (0 << CS12) | (1 << CS11) | (0 << CS10);
+	TIMSK1	= (1 << TOIE1);
+	TCNT1	= T1VALUE;
+}
+
+void initTMR3()
+{
+	// Usaremos TIM3 en modo NORMAL con PS de 8
+	TCCR3B	= (0 << CS32) | (1 << CS31) | (0 << CS30);
+	TIMSK3	= (1 << TOIE3);
+	TCNT3	= T3VALUE;
 }
 
 void initPCINT()
@@ -242,4 +268,29 @@ ISR(ADC_vect)
 {
 	// Como el ADC se encuentra en Free Running Mode... solo guardamos el valor de lectura
 	ADC_VALUE = ADCH;
+}
+
+// Para la alarma, je
+ISR(TIMER1_OVF_vect)
+{
+	// Si pasaron 5ms, hacemos SWAP a ALARM_5ms:
+	if (ALARM_5ms == 0)
+	{
+		ALARM_5ms = 1;
+	} else if (ALARM_5ms == 1)
+	{
+		ALARM_5ms = 0;
+	}
+}
+
+ISR(TIMER3_OVF_vect)
+{
+	// Si la alarma está activa, y ALARM_5ms==1, hacemos SWAP en PC7 (ALARM BIT)
+	if ((ALARM_ACTIVE == 1) && (ALARM_5ms == 1))
+	{
+		PORTC = (1 << ALARM);
+	} else
+	{
+		PORTC = (0 << ALARM);
+	}
 }
