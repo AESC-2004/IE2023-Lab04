@@ -79,21 +79,32 @@ int main(void)
 		if (COUNT > ADC_VALUE)
 		{
 			ALARM_ACTIVE = 1;
-			// Revisamos si es la primera vez que se enciende la alarma, y si sí, reseteamos los timers:
+			// Revisamos si es la primera vez que se enciende la alarma, y si sí, reseteamos los timers y activamos INTs:
 			if (ALARM_START == 0)
 			{
-				ALARM_START == 1;
+				ALARM_START = 1;
+				TIMSK1	= (1 << TOIE1);
+				TIMSK4	= (1 << TOIE4);
 				TCNT1 = 0;
 				TCNT4 = 0;
+				ALARM_500ms = 0;
+				ALARM_72ms	= 0;
 			}
 		} else if (COUNT <= ADC_VALUE)
 		{
 			ALARM_ACTIVE = 0;
 			ALARM_START  = 0;
+			// Apagamos interrupciones y resetamos timers:
+			TIMSK1	= (0 << TOIE1);
+			TIMSK4	= (0 << TOIE4);
+			TCNT1 = 0;
+			TCNT4 = 0;
+			ALARM_500ms = 0;
+			ALARM_72ms	= 0;
 		}
 		
-		// Para la alarma, revisamos si ALARM_ACTIVE, ALARM_500ms, y ALARM_166ms ESTÁN ENCENDIDOS, para ENCENDER o no la alarma.
-		if (ALARM_ACTIVE == 1 && ALARM_500ms == 1 && ALARM_166ms == 1)
+		// Para la alarma, revisamos si ALARM_ACTIVE, ALARM_500ms, y ALARM_72ms ESTÁN ENCENDIDOS, para ENCENDER o no la alarma.
+		if (ALARM_ACTIVE == 1 && ALARM_500ms == 1 && ALARM_72ms == 1)
 		{
 			PORTC = (1 << ALARM);
 		}
